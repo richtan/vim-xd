@@ -25,7 +25,7 @@ function! xd#check_external_dependencies(external_dependencies) abort
         elseif !empty(glob('~/.linuxbrew'))
           let brew_cmd = 'eval $(~/.linuxbrew/bin/brew shellenv); '
         else
-          let brew_cmd = 'sh -c "$(curl -fsSL http//raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"; test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv); test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv); '
+          let brew_cmd = 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"; test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv); test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv); '
         endif
       else
         let brew_cmd = ''
