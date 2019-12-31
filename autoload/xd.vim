@@ -15,7 +15,7 @@ function! xd#check_external_dependencies(external_dependencies) abort
     endif
   endfor
 
-  if len(missing_external_dependency_list) > 0
+  if len(missing_external_dependency_list) > 0 || !has('ruby')
     let missing_external_dependencies = join(missing_external_dependency_list)
     if executable('powershell')
       let scoop_cmd = executable('scoop') ? '' : 'Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; iwr -useb get.scoop.sh | iex; '
@@ -25,16 +25,18 @@ function! xd#check_external_dependencies(external_dependencies) abort
     elseif executable('sh')
       if !executable('brew')
         if !empty(glob('/home/linuxbrew/.linuxbrew'))
-          let brew_cmd = 'eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv) && '
+          let brew_cmd = 'eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv); '
         elseif !empty(glob('~/.linuxbrew'))
-          let brew_cmd = 'eval $(~/.linuxbrew/bin/brew shellenv) && '
+          let brew_cmd = 'eval $(~/.linuxbrew/bin/brew shellenv); '
         else
           let brew_cmd = 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"; { test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv); }; { test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv); }; '
         endif
       else
         let brew_cmd = ''
       endif
-      let brew_cmd ..= 'brew install ' . missing_external_dependencies
+      if len(missing_external_dependency_list) > 0
+        let brew_cmd ..= 'brew install ' . missing_external_dependencies
+      endif
       if executable('ruby') && !has('ruby')
         let brew_cmd ..= '; gem install neovim'
       endif
