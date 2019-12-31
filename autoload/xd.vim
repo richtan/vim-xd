@@ -21,7 +21,7 @@ function! xd#check_external_dependencies(external_dependencies) abort
       let scoop_cmd = executable('scoop') ? '' : 'Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; iwr -useb get.scoop.sh | iex; '
       let scoop_cmd ..= 'scoop install ' . missing_external_dependencies
       let @+ = scoop_cmd
-      echom "Execute 'xd.ps1' in PowerShell to install missing external dependencies."
+      echom "Execute the copied commands in PowerShell to install missing external dependencies."
     elseif executable('sh')
       if !executable('brew')
         if !empty(glob('/home/linuxbrew/.linuxbrew'))
@@ -36,7 +36,7 @@ function! xd#check_external_dependencies(external_dependencies) abort
       endif
       let brew_cmd ..= 'brew install ' . missing_external_dependencies
       let @+ = brew_cmd
-      echom "Execute 'xd.sh' in Bash to install missing external dependencies."
+      echom "Execute the copied commands in Bash to install missing external dependencies."
     else
       let @+ = missing_external_dependencies
       echom 'Install these missing dependencies and add them to PATH (copied to clipboard and xd.txt): ' . missing_external_dependencies
