@@ -35,6 +35,9 @@ function! xd#check_external_dependencies(external_dependencies) abort
         let brew_cmd = ''
       endif
       let brew_cmd ..= 'brew install ' . missing_external_dependencies
+      if executable('ruby') && !has('ruby')
+        let brew_cmd ..= '; gem install neovim'
+      endif
       let @+ = brew_cmd
       echom "Execute the copied commands in Bash to install missing external dependencies."
     else
