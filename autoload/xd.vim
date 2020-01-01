@@ -7,44 +7,55 @@ if exists('g:loaded_xd')
 endif
 let g:loaded_xd = 1
 
-function! xd#check_external_dependencies(external_dependencies) abort
+let s:cpo_save = &cpo
+set cpo&vim
+
+let s:has_powershell = executable('powershell')
+
+function! xd#check_external_dependencies(external_dependencies, providers) abort
   let missing_external_dependency_list = []
   for [dependency_cmd, dependency] in items(a:external_dependencies)
-    if !executable(dependency_cmd) && !empty(dependency[executable('powershell')])
-      call add(missing_external_dependency_list, dependency[executable('powershell')])
+    if !executable(dependency_cmd) && !empty(dependency[s:has_powershell])
+      call add(missing_external_dependency_list, dependency[s:has_powershell])
     endif
   endfor
 
-  if len(missing_external_dependency_list) > 0 || !has('ruby')
+  let missing_provider_list = []
+  for provider in a:providers
+    if !has(provider)
+      call add(missing_provider_list, provider)
+    endif
+  endfor
+
+  let cmds = []
+  if len(missing_external_dependency_list) > 0
     let missing_external_dependencies = join(missing_external_dependency_list)
-    if executable('powershell')
-      let scoop_cmd = executable('scoop') ? '' : 'Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; iwr -useb get.scoop.sh | iex; '
-      let scoop_cmd ..= 'scoop install ' . missing_external_dependencies
-      let @+ = scoop_cmd
-      echom "Execute the copied commands in PowerShell to install missing external dependencies."
-    elseif executable('sh')
+    if s:has_powershell
+      if !executable('scoop')
+        call add(cmds, 'Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; iwr -useb get.scoop.sh | iex')
+      endif
+      call add(cmds, 'scoop install ' . missing_external_dependencies)
+    else
       if !executable('brew')
         if !empty(glob('/home/linuxbrew/.linuxbrew'))
-          let brew_cmd = 'eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv); '
+          call add(cmds, 'eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)')
         elseif !empty(glob('~/.linuxbrew'))
-          let brew_cmd = 'eval $(~/.linuxbrew/bin/brew shellenv); '
+          call add(cmds, 'eval $(~/.linuxbrew/bin/brew shellenv)')
         else
-          let brew_cmd = 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"; { test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv); }; { test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv); }; '
+          call add(cmds, 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"; { test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv); }; { test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv); }')
         endif
-      else
-        let brew_cmd = ''
       endif
-      if len(missing_external_dependency_list) > 0
-        let brew_cmd ..= 'brew install ' . missing_external_dependencies
-      endif
-      if executable('ruby') && !has('ruby')
-        let brew_cmd ..= '; gem install neovim'
-      endif
-      let @+ = brew_cmd
-      echom "Execute the copied commands in Bash to install missing external dependencies."
-    else
-      let @+ = missing_external_dependencies
-      echom 'Install these missing dependencies and add them to PATH (copied to clipboard and xd.txt): ' . missing_external_dependencies
+      call add(cmds, 'brew install ' . missing_external_dependencies)
     endif
   endif
+  if index(missing_provider_list, 'ruby') >= 0
+    call add(cmds, 'gem install neovim')
+  endif
+  if !empty(cmds)
+    let @+ = join(cmds, '; ')
+    echom 'Execute the copied commands in ' . (s:has_powershell ? 'PowerShell' : 'Bash') . ' to install missing external dependencies.'
+  endif
 endfunction
+
+let &cpo = s:cpo_save
+unlet s:cpo_save
