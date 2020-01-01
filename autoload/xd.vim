@@ -49,7 +49,9 @@ function! xd#check_external_dependencies(external_dependencies, providers) abort
     endif
   endif
   if index(missing_provider_list, 'ruby') >= 0
-    call add(cmds, 'gem install neovim')
+    if s:is_win || empty(system("ruby -r rubygems -e 'puts Gem.user_dir'") . '/bin/neovim-ruby-host')
+      call add(cmds, 'gem install neovim')
+    endif
     if !s:is_win
       call add(cmds, 'PATH="$(ruby -r rubygems -e ''puts Gem.user_dir'')/bin:$PATH"')
     endif
