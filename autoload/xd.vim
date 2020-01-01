@@ -48,23 +48,21 @@ function! xd#check_external_dependencies(external_dependencies, providers) abort
       call add(cmd_list, 'brew install ' . missing_external_dependencies)
     endif
   endif
+  if !s:is_win
+    let g:ruby_host_prog = substitute(system("ruby -r rubygems -e 'puts Gem.user_dir'"), '\n', '', '') . '/bin/neovim-ruby-host'
+  endif
   if index(missing_provider_list, 'ruby') >= 0
-    if s:is_win || empty(system("ruby -r rubygems -e 'puts Gem.user_dir'") . '/bin/neovim-ruby-host')
-      call add(cmd_list, 'gem install neovim')
-    endif
-    if !s:is_win
-      call add(cmd_list, 'PATH="' . system("ruby -r rubygems -e 'puts Gem.user_dir'") . '/bin:$PATH"')
-    endif
+    call add(cmd_list, 'gem install neovim')
   endif
   if !empty(cmd_list)
     let vimdir = $HOME . (has('unix') ? '/.vim/' : '/vimfiles/')
-    let cmds = substitute(join(cmd_list, '; '), '\n', '', '')
+    let cmds = join(cmd_list, '; ')
     if s:is_win
       silent! execute '!powershell "' . cmds . '" > ' . vimdir . 'xd.ps1'
     else
       silent! execute "!echo '" . cmds . "' > " . vimdir . 'xd.sh; chmod +x ' . vimdir . 'xd.sh'
     endif
-    echom 'Execute the copied commands in ' . (s:is_win ? 'PowerShell' : 'Bash') . ' to install missing external dependencies.'
+    echom 'Execute "xd.' . (s:is_win ? 'ps1' : 'sh') . '" in ' . (s:is_win ? 'PowerShell' : 'Bash') . ' to install missing external dependencies.'
   endif
 endfunction
 
