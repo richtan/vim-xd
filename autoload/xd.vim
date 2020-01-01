@@ -10,13 +10,13 @@ let g:loaded_xd = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-let s:has_powershell = executable('powershell')
+let s:is_win = has('win32')
 
 function! xd#check_external_dependencies(external_dependencies, providers) abort
   let missing_external_dependency_list = []
   for [dependency_cmd, dependency] in items(a:external_dependencies)
-    if !executable(dependency_cmd) && !empty(dependency[s:has_powershell])
-      call add(missing_external_dependency_list, dependency[s:has_powershell])
+    if !executable(dependency_cmd) && !empty(dependency[s:is_win])
+      call add(missing_external_dependency_list, dependency[s:is_win])
     endif
   endfor
 
@@ -30,7 +30,7 @@ function! xd#check_external_dependencies(external_dependencies, providers) abort
   let cmds = []
   if len(missing_external_dependency_list) > 0
     let missing_external_dependencies = join(missing_external_dependency_list)
-    if s:has_powershell
+    if s:is_win
       if !executable('scoop')
         call add(cmds, 'Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; iwr -useb get.scoop.sh | iex')
       endif
@@ -50,10 +50,13 @@ function! xd#check_external_dependencies(external_dependencies, providers) abort
   endif
   if index(missing_provider_list, 'ruby') >= 0
     call add(cmds, 'gem install neovim')
+    if !s:is_win
+      call add(cmds, 'PATH="$(ruby -r rubygems -e ''puts Gem.user_dir'')/bin:$PATH"')
+    endif
   endif
   if !empty(cmds)
     let @+ = join(cmds, '; ')
-    echom 'Execute the copied commands in ' . (s:has_powershell ? 'PowerShell' : 'Bash') . ' to install missing external dependencies.'
+    echom 'Execute the copied commands in ' . (s:is_win ? 'PowerShell' : 'Bash') . ' to install missing external dependencies.'
   endif
 endfunction
 
