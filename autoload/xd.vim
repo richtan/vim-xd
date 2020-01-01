@@ -27,37 +27,43 @@ function! xd#check_external_dependencies(external_dependencies, providers) abort
     endif
   endfor
 
-  let cmds = []
+  let cmd_list = []
   if len(missing_external_dependency_list) > 0
     let missing_external_dependencies = join(missing_external_dependency_list)
     if s:is_win
       if !executable('scoop')
-        call add(cmds, 'Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; iwr -useb get.scoop.sh | iex')
+        call add(cmd_list, 'Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; iwr -useb get.scoop.sh | iex')
       endif
-      call add(cmds, 'scoop install ' . missing_external_dependencies)
+      call add(cmd_list, 'scoop install ' . missing_external_dependencies)
     else
       if !executable('brew')
         if !empty(glob('/home/linuxbrew/.linuxbrew'))
-          call add(cmds, 'eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)')
+          call add(cmd_list, 'eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)')
         elseif !empty(glob('~/.linuxbrew'))
-          call add(cmds, 'eval $(~/.linuxbrew/bin/brew shellenv)')
+          call add(cmd_list, 'eval $(~/.linuxbrew/bin/brew shellenv)')
         else
-          call add(cmds, 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"; { test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv); }; { test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv); }')
+          call add(cmd_list, 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"; { test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv); }; { test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv); }')
         endif
       endif
-      call add(cmds, 'brew install ' . missing_external_dependencies)
+      call add(cmd_list, 'brew install ' . missing_external_dependencies)
     endif
   endif
   if index(missing_provider_list, 'ruby') >= 0
     if s:is_win || empty(system("ruby -r rubygems -e 'puts Gem.user_dir'") . '/bin/neovim-ruby-host')
-      call add(cmds, 'gem install neovim')
+      call add(cmd_list, 'gem install neovim')
     endif
     if !s:is_win
-      call add(cmds, 'PATH="$(ruby -r rubygems -e ''puts Gem.user_dir'')/bin:$PATH"')
+      call add(cmd_list, 'PATH="' . system("ruby -r rubygems -e 'puts Gem.user_dir'") . '/bin:$PATH"')
     endif
   endif
-  if !empty(cmds)
-    let @+ = join(cmds, '; ')
+  if !empty(cmd_list)
+    let vimdir = $HOME . (has('unix') ? '/.vim/' : '/vimfiles/')
+    let cmds = substitute(join(cmd_list, '; '), '\n', '', '')
+    if s:is_win
+      silent! execute '!powershell "' . cmds . '" > ' . vimdir . 'xd.ps1'
+    else
+      silent! execute "!echo '" . cmds . "' > " . vimdir . 'xd.sh; chmod +x ' . vimdir . 'xd.sh'
+    endif
     echom 'Execute the copied commands in ' . (s:is_win ? 'PowerShell' : 'Bash') . ' to install missing external dependencies.'
   endif
 endfunction
