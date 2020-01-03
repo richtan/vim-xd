@@ -48,7 +48,7 @@ function! xd#check_external_dependencies(external_dependencies, providers) abort
       call add(cmd_list, 'brew reinstall ' . missing_external_dependencies)
     endif
   endif
-  if !s:has_powershell
+  if !s:has_powershell && executable('ruby')
     let g:ruby_host_prog = substitute(system("ruby -r rubygems -e 'puts Gem.user_dir'"), '\n', '', '') . '/bin/neovim-ruby-host'
   endif
   if index(missing_provider_list, 'ruby') >= 0
@@ -60,9 +60,10 @@ function! xd#check_external_dependencies(external_dependencies, providers) abort
     if s:has_powershell
       silent! execute '!powershell "' . cmds . '" > ' . vimdir . 'xd.ps1'
     else
-      silent! execute "!echo '" . cmds . "' > " . vimdir . 'xd.sh; chmod +x ' . vimdir . 'xd.sh'
+      silent! execute "!echo '" . cmds . "' > " . vimdir . 'xd.sh'
     endif
-    echom 'Execute "xd.' . (s:has_powershell ? 'ps1' : 'sh') . '" in ' . (s:has_powershell ? 'PowerShell' : 'Bash') . ' to install missing external dependencies.'
+    silent! execute 'redraw!'
+    echom 'Run "' . (s:has_powershell ? vimdir . 'xd.ps1' : 'source ' . vimdir . 'xd.sh') . '" in ' . (s:has_powershell ? 'PowerShell' : 'Bash') . ' to install missing external dependencies.'
   endif
 endfunction
 
