@@ -45,7 +45,7 @@ function! xd#check_external_dependencies(external_dependencies, providers) abort
           call add(cmd_list, 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"; { test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv); }; { test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv); }')
         endif
       endif
-      call add(cmd_list, 'brew install ' . missing_external_dependencies)
+      call add(cmd_list, 'brew reinstall ' . missing_external_dependencies)
     endif
   endif
   if !s:has_powershell
