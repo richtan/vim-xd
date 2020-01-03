@@ -1,4 +1,4 @@
-" xd.vim - Creates a chain of shell commands to install needed external dependencies
+" xd.vim - Installs external dependencies
 " Author: Richie Tan <richietan2004@gmail.com>
 " License: MIT License
 
@@ -48,22 +48,23 @@ function! xd#check_external_dependencies(external_dependencies, providers) abort
       call add(cmd_list, 'brew reinstall ' . missing_external_dependencies)
     endif
   endif
-  if !s:has_powershell && executable('ruby')
-    let g:ruby_host_prog = substitute(system("ruby -r rubygems -e 'puts Gem.user_dir'"), '\n', '', '') . '/bin/neovim-ruby-host'
-  endif
+
+  " Ruby support for Neovim
   if index(missing_provider_list, 'ruby') >= 0
     call add(cmd_list, 'gem install neovim')
   endif
+
+  " Get new $PATH
+  if s:has_powershell
+    call add(cmd_list, 'echo $env:PATH')
+  else
+    call add(cmd_list, 'echo $PATH')
+  endif
+
+  " Run commands and set new $PATH
   if !empty(cmd_list)
-    let vimdir = $HOME . (has('unix') ? '/.vim/' : '/vimfiles/')
     let cmds = join(cmd_list, '; ')
-    if s:has_powershell
-      silent! execute '!powershell "' . cmds . '" > ' . vimdir . 'xd.ps1'
-    else
-      silent! execute "!echo '" . cmds . "' > " . vimdir . 'xd.sh'
-    endif
-    silent! execute 'redraw!'
-    echom 'Run "' . (s:has_powershell ? vimdir . 'xd.ps1' : 'source ' . vimdir . 'xd.sh') . '" in ' . (s:has_powershell ? 'PowerShell' : 'Bash') . ' to install missing external dependencies.'
+    silent! let $PATH = systemlist(cmds)[-1]
   endif
 endfunction
 
