@@ -10,7 +10,7 @@ let g:loaded_xd = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-let s:has_powershell = has('powershell')
+let s:has_powershell = executable('powershell')
 
 function! xd#check_external_dependencies(external_dependencies, providers) abort
   let missing_external_dependency_list = []
