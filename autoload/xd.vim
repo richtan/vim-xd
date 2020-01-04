@@ -64,7 +64,7 @@ function! xd#check_external_dependencies(external_dependencies, providers) abort
   " Run commands and set new $PATH
   if !empty(cmd_list)
     let cmds = join(cmd_list, '; ')
-    silent! let $PATH = systemlist(cmds)[-1]
+    silent! let $PATH = systemlist((s:has_powershell ? 'powershell' : 'bash') . cmds)[-1]
   endif
 endfunction
 
