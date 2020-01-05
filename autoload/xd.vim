@@ -62,11 +62,10 @@ function! xd#check_external_dependencies(external_dependencies, providers) abort
 
   if s:has_powershell
     set shell=powershell
-    set shellquote=\"
   else
     set shell=sh
-    set shellquote=
   endif
+  set shellquote=
   set shellcmdflag=-c
   set shellxquote=
 
