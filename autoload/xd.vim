@@ -83,8 +83,9 @@ function! xd#check_external_dependencies(external_dependencies, providers) abort
   let missing_provider_list = []
   let provider_installed_list = {
         \ 'ruby': executable('neovim-ruby-host'),
-        \ 'python3': system((executable('py') ? 'py -3' : 'python3') . ' -c ''import pkgutil; print(1 if pkgutil.find_loader("pynvim") else 0)''') == 1
+        \ 'python3': (has('nvim') ? system((executable('py') ? 'py -3' : 'python3') . ' -c ''import pkgutil; print(1 if pkgutil.find_loader("pynvim") else 0)''') == 1 : 0)
         \ }
+
   for provider in a:providers
     if !provider_installed_list[provider]
       call add(missing_provider_list, provider)
@@ -106,14 +107,16 @@ function! xd#check_external_dependencies(external_dependencies, providers) abort
     endif
   endif
 
-  " Ruby support for Neovim
-  if index(missing_provider_list, 'ruby') >= 0
-    call add(s:cmd_list, 'gem install neovim')
-  endif
+  if has('nvim')
+    " Ruby support for Neovim
+    if index(missing_provider_list, 'ruby') >= 0
+      call add(s:cmd_list, 'gem install neovim')
+    endif
 
-  " Python3 support for Neovim
-  if index(missing_provider_list, 'python3') >= 0
-    call add(s:cmd_list, (executable('py') ? 'py -3' : 'python3') . ' -m pip install neovim --user')
+    " Python3 support for Neovim
+    if index(missing_provider_list, 'python3') >= 0
+      call add(s:cmd_list, (executable('py') ? 'py -3' : 'python3') . ' -m pip install neovim')
+    endif
   endif
 
   " Install missing external dependencies
