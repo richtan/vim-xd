@@ -83,7 +83,7 @@ function! xd#check_external_dependencies(external_dependencies, providers) abort
   let missing_provider_list = []
   let provider_installed_list = {
         \ 'ruby': executable('neovim-ruby-host'),
-        \ 'python3': (has('nvim') ? system((executable('py') ? 'py -3' : 'python3') . ' -c ''import pkgutil; print(1 if pkgutil.find_loader("pynvim") else 0)''') == 1 : 0)
+        \ 'python3': has('python3_dynamic') || has('python_dynamic')
         \ }
 
   for provider in a:providers
